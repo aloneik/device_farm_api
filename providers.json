@@ -1,0 +1,32 @@
+[
+  {
+    "id": "provider1",
+    "devices": [
+      {
+        "serial": "emulator-5554",
+        "name": "Pixel 6",
+        "enabled": false
+      },
+      {
+        "serial": "emulator-5556",
+        "name": "Pixel 7",
+        "enabled": false
+      }
+    ]
+  },
+  {
+    "id": "provider2",
+    "devices": [
+      {
+        "serial": "RFCW70K4H9R",
+        "name": "Galaxy ZFold5",
+        "enabled": true
+      },
+      {
+        "serial": "R5CT207KDVJ",
+        "name": "Galaxy S22",
+        "enabled": true
+      }
+    ]
+  }
+]
