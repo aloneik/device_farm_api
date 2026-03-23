@@ -1,3 +1,4 @@
+mod auth;
 mod handlers;
 mod models;
 mod sse;
@@ -9,7 +10,7 @@ use axum::{
 };
 use handlers::{
     add_device, book_device, device_events, get_provider_devices, health, list_all_devices,
-    list_devices, list_providers, provider_connect, provider_heartbeat, register_device,
+    list_devices, list_providers, login, provider_connect, provider_heartbeat, register_device,
     update_device, update_device_status,
 };
 use state::AppState;
@@ -68,6 +69,7 @@ async fn shutdown_signal() {
 fn build_router(state: AppState) -> Router {
     Router::new()
         .route("/health", get(health))
+        .route("/auth/login", post(login))
         // Consumer-facing
         .route("/devices", get(list_devices))
         .route("/devices/events", get(device_events))

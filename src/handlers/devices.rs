@@ -1,3 +1,4 @@
+use crate::auth::jwt::Claims;
 use crate::models::{Device, DeviceEvent, DeviceResponse, DeviceStatus, RegisterDevice, StatusUpdate};
 use crate::sse::device_status_stream;
 use crate::state::AppState;
@@ -12,7 +13,10 @@ use axum::{
 };
 use tracing::{info, warn};
 
-pub async fn list_devices(State(state): State<AppState>) -> impl IntoResponse {
+pub async fn list_devices(
+    _claims: Claims,
+    State(state): State<AppState>,
+) -> impl IntoResponse {
     let devices = state.db.read().unwrap();
     info!(count = devices.len(), "Listing devices");
     let response: Vec<DeviceResponse> = devices.iter().map(DeviceResponse::from).collect();
@@ -80,6 +84,7 @@ pub async fn register_device(
 }
 
 pub async fn book_device(
+    _claims: Claims,
     Path(serial): Path<String>,
     State(state): State<AppState>,
 ) -> Result<Json<DeviceResponse>, StatusCode> {
@@ -136,6 +141,7 @@ pub async fn update_device_status(
 }
 
 pub async fn device_events(
+    _claims: Claims,
     State(state): State<AppState>,
 ) -> Sse<impl futures_util::Stream<Item = Result<axum::response::sse::Event, std::convert::Infallible>>>
 {

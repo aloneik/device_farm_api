@@ -1,4 +1,4 @@
-use crate::models::{Device, DeviceEvent, DeviceStatus, ProviderConfig, ProviderDeviceConfig};
+use crate::models::{Device, DeviceEvent, DeviceStatus, ProviderConfig, ProviderDeviceConfig, UserEntry, UsersConfig};
 use std::{
     collections::HashMap,
     fs,
@@ -20,6 +20,8 @@ pub struct AppState {
     pub providers: ProviderDb,
     pub heartbeats: HeartbeatDb,
     pub tx: broadcast::Sender<DeviceEvent>,
+    pub jwt_secret: String,
+    pub users: Arc<Vec<UserEntry>>,
 }
 
 impl AppState {
@@ -64,11 +66,28 @@ impl AppState {
 
         let (tx, _) = broadcast::channel(64);
 
+        let jwt_secret = std::env::var("JWT_SECRET")
+            .expect("JWT_SECRET env var must be set");
+
+        let users_config_path = std::env::var("USERS_CONFIG_PATH")
+            .unwrap_or_else(|_| "users.json".into());
+        let users = if let Ok(raw) = fs::read_to_string(&users_config_path) {
+            let cfg: UsersConfig = serde_json::from_str(&raw)
+                .unwrap_or_else(|e| panic!("Failed to parse {users_config_path}: {e}"));
+            info!(path = %users_config_path, count = cfg.users.len(), "Loaded users config");
+            cfg.users
+        } else {
+            info!(path = %users_config_path, "Users config not found, no local/LDAP users loaded");
+            Vec::new()
+        };
+
         Self {
             db: Arc::new(RwLock::new(all_devices)),
             providers: Arc::new(RwLock::new(provider_map)),
             heartbeats: Arc::new(RwLock::new(HashMap::new())),
             tx,
+            jwt_secret,
+            users: Arc::new(users),
         }
     }
 }

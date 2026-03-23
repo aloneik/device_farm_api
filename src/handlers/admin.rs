@@ -1,6 +1,7 @@
+use crate::auth::jwt::Claims;
 use crate::models::{
     AdminAddDevice, AdminDeviceResponse, AdminUpdateDevice, Device, DeviceEvent, DeviceStatus,
-    ProviderDeviceConfig,
+    ProviderDeviceConfig, Role,
 };
 use crate::state::AppState;
 use axum::{
@@ -15,7 +16,13 @@ use tracing::{info, warn};
 ///
 /// Returns every device from every provider's config, including disabled ones.
 /// Live runtime data (model, os_version, status) is overlaid where available.
-pub async fn list_all_devices(State(state): State<AppState>) -> impl IntoResponse {
+pub async fn list_all_devices(
+    claims: Claims,
+    State(state): State<AppState>,
+) -> Result<impl IntoResponse, StatusCode> {
+    if claims.role != Role::Admin {
+        return Err(StatusCode::FORBIDDEN);
+    }
     let providers = state.providers.read().unwrap();
     let db = state.db.read().unwrap();
 
@@ -42,7 +49,7 @@ pub async fn list_all_devices(State(state): State<AppState>) -> impl IntoRespons
     }
 
     info!(count = result.len(), "Admin: listing all devices");
-    Json(result)
+    Ok(Json(result))
 }
 
 /// `POST /admin/providers/{provider_id}/devices`
@@ -51,10 +58,14 @@ pub async fn list_all_devices(State(state): State<AppState>) -> impl IntoRespons
 /// If `enabled` is true, an `Offline` stub is immediately inserted into the live DB
 /// so the frontend can see it before the provider connects.
 pub async fn add_device(
+    claims: Claims,
     Path(provider_id): Path<String>,
     State(state): State<AppState>,
     Json(payload): Json<AdminAddDevice>,
 ) -> Result<Json<AdminDeviceResponse>, StatusCode> {
+    if claims.role != Role::Admin {
+        return Err(StatusCode::FORBIDDEN);
+    }
     let mut providers = state.providers.write().unwrap();
 
     let provider_devices = providers.get_mut(&provider_id).ok_or_else(|| {
@@ -123,10 +134,14 @@ pub async fn add_device(
 ///   broadcasts an `Offline` event so consumers and providers are notified.
 /// - Toggling `enabled` **false → true**: inserts an `Offline` stub into the live DB.
 pub async fn update_device(
+    claims: Claims,
     Path((provider_id, serial)): Path<(String, String)>,
     State(state): State<AppState>,
     Json(payload): Json<AdminUpdateDevice>,
 ) -> Result<Json<AdminDeviceResponse>, StatusCode> {
+    if claims.role != Role::Admin {
+        return Err(StatusCode::FORBIDDEN);
+    }
     let mut providers = state.providers.write().unwrap();
 
     let provider_devices = providers.get_mut(&provider_id).ok_or_else(|| {

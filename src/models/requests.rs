@@ -33,3 +33,10 @@ pub struct AdminUpdateDevice {
     pub name: Option<String>,
     pub enabled: Option<bool>,
 }
+
+/// Body for `POST /auth/login`.
+#[derive(Debug, Deserialize)]
+pub struct LoginRequest {
+    pub username: String,
+    pub password: String,
+}

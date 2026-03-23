@@ -93,3 +93,9 @@ pub struct AdminDeviceResponse {
     pub provider_id: String,
     pub enabled: bool,
 }
+
+/// Response body for `POST /auth/login`.
+#[derive(Debug, Serialize)]
+pub struct LoginResponse {
+    pub token: String,
+}

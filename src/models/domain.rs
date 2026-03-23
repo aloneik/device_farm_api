@@ -36,3 +36,37 @@ pub struct ProviderDeviceConfig {
     pub name: String,
     pub enabled: bool,
 }
+
+/// Role a user holds within the API.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum Role {
+    Admin,
+    Consumer,
+}
+
+/// Which authentication backend validates a user's password.
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum AuthMethod {
+    Local,
+    Ldap,
+}
+
+/// Single entry in `users.json`.
+#[derive(Debug, Clone, Deserialize)]
+pub struct UserEntry {
+    pub username: String,
+    pub auth: AuthMethod,
+    /// Argon2id hash — required when `auth = "local"`.
+    pub password_hash: Option<String>,
+    /// LDAP UID substituted into the bind-DN template — required when `auth = "ldap"`.
+    pub ldap_uid: Option<String>,
+    pub role: Role,
+}
+
+/// Top-level shape of `users.json`.
+#[derive(Debug, Deserialize)]
+pub struct UsersConfig {
+    pub users: Vec<UserEntry>,
+}
