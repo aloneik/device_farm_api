@@ -1,6 +1,20 @@
 use crate::models::domain::{Device, DeviceStatus, ProviderDeviceConfig};
 use serde::Serialize;
 
+/// Response body for the `GET /health` endpoint.
+#[derive(Debug, Serialize)]
+pub struct HealthResponse {
+    pub status: &'static str,
+}
+
+/// Response body for `POST /providers/{id}/heartbeat`.
+#[derive(Debug, Serialize)]
+pub struct ProviderHeartbeatResponse {
+    pub provider_id: String,
+    /// Unix timestamp (seconds) of when the heartbeat was received.
+    pub received_at: u64,
+}
+
 /// HTTP response body for device-related consumer and provider endpoints.
 #[derive(Debug, Clone, Serialize)]
 pub struct DeviceResponse {

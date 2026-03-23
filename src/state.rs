@@ -3,6 +3,7 @@ use std::{
     collections::HashMap,
     fs,
     sync::{Arc, RwLock},
+    time::SystemTime,
 };
 use tokio::sync::broadcast;
 use tracing::info;
@@ -10,11 +11,14 @@ use tracing::info;
 pub type DeviceDb = Arc<RwLock<Vec<Device>>>;
 // provider_id -> list of per-device config entries
 pub type ProviderDb = Arc<RwLock<HashMap<String, Vec<ProviderDeviceConfig>>>>;
+// provider_id -> last heartbeat timestamp
+pub type HeartbeatDb = Arc<RwLock<HashMap<String, SystemTime>>>;
 
 #[derive(Clone)]
 pub struct AppState {
     pub db: DeviceDb,
     pub providers: ProviderDb,
+    pub heartbeats: HeartbeatDb,
     pub tx: broadcast::Sender<DeviceEvent>,
 }
 
@@ -63,6 +67,7 @@ impl AppState {
         Self {
             db: Arc::new(RwLock::new(all_devices)),
             providers: Arc::new(RwLock::new(provider_map)),
+            heartbeats: Arc::new(RwLock::new(HashMap::new())),
             tx,
         }
     }

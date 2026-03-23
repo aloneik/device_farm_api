@@ -8,9 +8,9 @@ use axum::{
     Router,
 };
 use handlers::{
-    add_device, book_device, device_events, get_provider_devices, list_all_devices,
-    list_devices, list_providers, provider_connect, register_device, update_device,
-    update_device_status,
+    add_device, book_device, device_events, get_provider_devices, health, list_all_devices,
+    list_devices, list_providers, provider_connect, provider_heartbeat, register_device,
+    update_device, update_device_status,
 };
 use state::AppState;
 use tracing::info;
@@ -67,6 +67,7 @@ async fn shutdown_signal() {
 
 fn build_router(state: AppState) -> Router {
     Router::new()
+        .route("/health", get(health))
         // Consumer-facing
         .route("/devices", get(list_devices))
         .route("/devices/events", get(device_events))
@@ -77,6 +78,7 @@ fn build_router(state: AppState) -> Router {
         .route("/providers", get(list_providers))
         .route("/providers/{id}/devices", get(get_provider_devices))
         .route("/providers/{id}/connect", get(provider_connect))
+        .route("/providers/{id}/heartbeat", post(provider_heartbeat))
         // Admin-facing
         .route("/admin/devices", get(list_all_devices))
         .route("/admin/providers/{provider_id}/devices", post(add_device))
