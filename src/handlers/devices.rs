@@ -112,6 +112,35 @@ pub async fn book_device(
     }
 }
 
+pub async fn release_device(
+    _claims: Claims,
+    Path(serial): Path<String>,
+    State(state): State<AppState>,
+) -> Result<Json<DeviceResponse>, StatusCode> {
+    let mut devices = state.db.write().unwrap();
+
+    match devices.iter_mut().find(|d| d.serial == serial) {
+        None => {
+            warn!(serial = %serial, "Device not found");
+            Err(StatusCode::NOT_FOUND)
+        }
+        Some(device) if device.status == DeviceStatus::Offline => {
+            warn!(serial = %device.serial, model = %device.model, "Device is offline, cannot release");
+            Err(StatusCode::SERVICE_UNAVAILABLE)
+        }
+        Some(device) if device.status == DeviceStatus::Available => {
+            warn!(serial = %device.serial, model = %device.model, "Device is already available");
+            Err(StatusCode::CONFLICT)
+        }
+        Some(device) => {
+            device.status = DeviceStatus::Available;
+            info!(serial = %device.serial, model = %device.model, "Device released");
+            let _ = state.tx.send(DeviceEvent::from_device(device));
+            Ok(Json(DeviceResponse::from(device as &Device)))
+        }
+    }
+}
+
 pub async fn update_device_status(
     Path(serial): Path<String>,
     State(state): State<AppState>,

@@ -9,9 +9,9 @@ use axum::{
     Router,
 };
 use handlers::{
-    add_device, book_device, device_events, get_provider_devices, health, list_all_devices,
+    add_device, book_device, release_device, device_events, get_provider_devices, health, list_all_devices,
     list_devices, list_providers, login, provider_connect, provider_heartbeat, register_device,
-    update_device, update_device_status,
+    update_device, update_device_status, 
 };
 use state::AppState;
 use tracing::info;
@@ -74,6 +74,7 @@ fn build_router(state: AppState) -> Router {
         .route("/devices", get(list_devices))
         .route("/devices/events", get(device_events))
         .route("/devices/{serial}/book", post(book_device))
+        .route("/devices/{serial}/release", post(release_device))
         // Provider-facing
         .route("/devices/{serial}/status", put(update_device_status))
         .route("/providers/{provider_id}/devices/{serial}/register", post(register_device))
